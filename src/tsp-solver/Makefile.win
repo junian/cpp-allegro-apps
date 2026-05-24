@@ -1,33 +1,20 @@
 # Project: Travelling Salesman Problem Solver
-# Makefile created by Dev-C++ 4.9.9.2
+# Allegro 5 - Windows / MinGW
+# Requires pkg-config and Allegro 5 installed (e.g. via vcpkg or msys2)
 
-CPP  = g++.exe
-CC   = gcc.exe
-WINDRES = windres.exe
-RES  = Travelling_Salesman_Problem_Solver_private.res
-OBJ  = "Travelling\ Salesman\ Problem\ Solver.o" $(RES)
-LINKOBJ  = "Travelling Salesman Problem Solver.o" $(RES)
-LIBS =  -L"C:/Dev-Cpp/lib" -mwindows -lalleg  
-INCS =  -I"C:/Dev-Cpp/include" 
-CXXINCS =  -I"C:/Dev-Cpp/lib/gcc/mingw32/3.4.2/include"  -I"C:/Dev-Cpp/include/c++/3.4.2/backward"  -I"C:/Dev-Cpp/include/c++/3.4.2/mingw32"  -I"C:/Dev-Cpp/include/c++/3.4.2"  -I"C:/Dev-Cpp/include" 
-BIN  = "Travelling Salesman Problem Solver.exe"
-CXXFLAGS = $(CXXINCS)  
-CFLAGS = $(INCS)  
-RM = rm -f
+CXX     = g++
+BIN     = tsp-solver.exe
+SRC     = "Travelling Salesman Problem Solver.cpp"
 
-.PHONY: all all-before all-after clean clean-custom
+CXXFLAGS = $(shell pkg-config allegro-5 allegro_main-5 allegro_font-5 allegro_ttf-5 allegro_primitives-5 --cflags)
+LIBS     = $(shell pkg-config allegro-5 allegro_main-5 allegro_font-5 allegro_ttf-5 allegro_primitives-5 --libs)
 
-all: all-before "Travelling Salesman Problem Solver.exe" all-after
+.PHONY: all clean
 
+all: $(BIN)
 
-clean: clean-custom
-	${RM} $(OBJ) $(BIN)
+$(BIN): $(SRC)
+	$(CXX) $(SRC) -o $(BIN) $(CXXFLAGS) $(LIBS)
 
-$(BIN): $(OBJ)
-	$(CPP) $(LINKOBJ) -o "Travelling Salesman Problem Solver.exe" $(LIBS)
-
-"Travelling\ Salesman\ Problem\ Solver.o": Travelling\ Salesman\ Problem\ Solver.cpp
-	$(CPP) -c "Travelling Salesman Problem Solver.cpp" -o "Travelling Salesman Problem Solver.o" $(CXXFLAGS)
-
-Travelling_Salesman_Problem_Solver_private.res: Travelling_Salesman_Problem_Solver_private.rc 
-	$(WINDRES) -i Travelling_Salesman_Problem_Solver_private.rc --input-format=rc -o Travelling_Salesman_Problem_Solver_private.res -O coff 
+clean:
+	del /Q $(BIN) 2>nul || rm -f $(BIN)
