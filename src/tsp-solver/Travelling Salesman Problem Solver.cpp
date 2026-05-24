@@ -11,8 +11,8 @@
 #define RADIUS  3
 #define EMPTY   -1
 
-#define SCREEN_W 800
-#define SCREEN_H 600
+#define SCREEN_W 1280
+#define SCREEN_H 720
 
 typedef struct {
     double length;
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to create display.\n");
         return -1;
     }
-    al_set_window_title(display, "Travelling Salesman Problem by Junian Triajianto - 5108100038");
+    al_set_window_title(display, "Travelling Salesman Problem by Junian.dev");
 
     /* --- Font: fall back to built-in if no TTF available --- */
     ALLEGRO_FONT *font = al_create_builtin_font();
