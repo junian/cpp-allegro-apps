@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to create display.\n");
         return -1;
     }
-    al_set_window_title(display, "Team27, inc - Innocent Snake");
+    al_set_window_title(display, "Innocent Snake - Junian.dev");
 
     ALLEGRO_TIMER *timer = al_create_timer(1.0 / TICKS_PER_SEC);
     if (!timer) {
@@ -73,9 +73,9 @@ int main(int argc, char **argv)
     /* ------------------------------------------------------------------ */
     /*  Load / create bitmaps                                               */
     /* ------------------------------------------------------------------ */
-    ALLEGRO_BITMAP *bmp_wall  = al_load_bitmap("wall.bmp");
-    ALLEGRO_BITMAP *bmp_head  = al_load_bitmap("head.bmp");
-    ALLEGRO_BITMAP *bmp_body  = al_load_bitmap("body.bmp");
+    ALLEGRO_BITMAP *bmp_wall  = al_load_bitmap("assets/wall.bmp");
+    ALLEGRO_BITMAP *bmp_head  = al_load_bitmap("assets/head.bmp");
+    ALLEGRO_BITMAP *bmp_body  = al_load_bitmap("assets/body.bmp");
 
     if (!bmp_wall || !bmp_head || !bmp_body) {
         fprintf(stderr, "Failed to load one or more bitmap assets.\n");
