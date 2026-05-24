@@ -1,9 +1,14 @@
-#include <allegro.h>
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_image.h>
+#include <allegro5/allegro_primitives.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define SIZE_X       40
 #define SIZE_Y       30
 #define OBJECT_SIZE  20
-#define BLACK        0
+#define SCREEN_W     (SIZE_X * OBJECT_SIZE)
+#define SCREEN_H     (SIZE_Y * OBJECT_SIZE)
 
 #define EAT          3
 #define HEAD        -2
@@ -11,215 +16,256 @@
 #define WALL        -1
 #define PATH         0
 
+/* Ticks per move: snake moves every MOVE_TICKS timer events */
+#define TICKS_PER_SEC  60
+#define MOVE_TICKS     6
 
-typedef struct stSNAKE
-{
+typedef struct stSNAKE {
     int x;
     int y;
     struct stSNAKE *next;
-}SNAKE;
+} SNAKE;
 
 void add_body(SNAKE **snake, int x, int y, int map[SIZE_Y][SIZE_X]);
 int  move_snake(SNAKE *snake, int moveX, int moveY, int map[SIZE_Y][SIZE_X]);
-void init();
-void deinit();
 
-int main()
+int main(int argc, char **argv)
 {
-	init();
-	set_window_title("Team27, inc - Innocent Snake");
-	srand((unsigned)time(NULL));
-	
-	//kondisi map awal
-	int map[SIZE_Y][SIZE_X] = {-1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1, 0, 0, 0, 0,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,
-                               -1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+    /* ------------------------------------------------------------------ */
+    /*  Init                                                                */
+    /* ------------------------------------------------------------------ */
+    if (!al_init()) {
+        fprintf(stderr, "Failed to initialize Allegro.\n");
+        return -1;
+    }
+    if (!al_init_image_addon()) {
+        fprintf(stderr, "Failed to initialize image addon.\n");
+        return -1;
+    }
+    if (!al_init_primitives_addon()) {
+        fprintf(stderr, "Failed to initialize primitives addon.\n");
+        return -1;
+    }
+    if (!al_install_keyboard()) {
+        fprintf(stderr, "Failed to install keyboard.\n");
+        return -1;
+    }
 
-	int counter = 0;
-	int posX, posY;
-	int loaded = 0;
-	int x_his, y_his;
-    int i, j, moveX = 1, moveY = 0;
-    
-    BITMAP *buffer      = create_bitmap(SCREEN_W, SCREEN_H);
-    BITMAP *path        = create_bitmap(OBJECT_SIZE, OBJECT_SIZE);
-    BITMAP *wall        = load_bitmap("wall.bmp", NULL);
-    BITMAP *head        = load_bitmap("head.bmp", NULL);
-    BITMAP *snake_body  = load_bitmap("body.bmp", NULL);
-    BITMAP *eat         = create_bitmap(OBJECT_SIZE, OBJECT_SIZE);
-    BITMAP *bg_map      = create_bitmap(SCREEN_W, SCREEN_H);
-    
-    SNAKE  *snake       = NULL;
-    SNAKE  *pointer     = NULL;
-                  
-    clear_to_color(path, makecol(255, 255, 255)); //jalan berwarna putih
-    clear_to_color(eat,  makecol(255, 255, 255)); //makanan backgroundnya putih
-    circlefill(eat, OBJECT_SIZE/2, OBJECT_SIZE/2, OBJECT_SIZE/2 - 4, makecol(255, 0, 0)); //makanan berwarna merah
-    
-    //membuat map snake di bitmap
-    for(i=0; i<SIZE_Y; i++)
-    {
-        for(j=0; j<SIZE_X; j++)
-        {
-            switch(map[i][j])
-            {
-                case PATH : draw_sprite(bg_map, path, j*OBJECT_SIZE, i*OBJECT_SIZE);
-                                break;
-                case WALL : draw_sprite(bg_map, wall, j*OBJECT_SIZE, i*OBJECT_SIZE);
-                                break;
+    ALLEGRO_DISPLAY *display = al_create_display(SCREEN_W, SCREEN_H);
+    if (!display) {
+        fprintf(stderr, "Failed to create display.\n");
+        return -1;
+    }
+    al_set_window_title(display, "Team27, inc - Innocent Snake");
+
+    ALLEGRO_TIMER *timer = al_create_timer(1.0 / TICKS_PER_SEC);
+    if (!timer) {
+        fprintf(stderr, "Failed to create timer.\n");
+        al_destroy_display(display);
+        return -1;
+    }
+
+    ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue();
+    al_register_event_source(queue, al_get_keyboard_event_source());
+    al_register_event_source(queue, al_get_display_event_source(display));
+    al_register_event_source(queue, al_get_timer_event_source(timer));
+
+    /* ------------------------------------------------------------------ */
+    /*  Load / create bitmaps                                               */
+    /* ------------------------------------------------------------------ */
+    ALLEGRO_BITMAP *bmp_wall  = al_load_bitmap("wall.bmp");
+    ALLEGRO_BITMAP *bmp_head  = al_load_bitmap("head.bmp");
+    ALLEGRO_BITMAP *bmp_body  = al_load_bitmap("body.bmp");
+
+    if (!bmp_wall || !bmp_head || !bmp_body) {
+        fprintf(stderr, "Failed to load one or more bitmap assets.\n");
+        al_destroy_display(display);
+        al_destroy_timer(timer);
+        al_destroy_event_queue(queue);
+        return -1;
+    }
+
+    /* Path tile: plain white square */
+    ALLEGRO_BITMAP *bmp_path = al_create_bitmap(OBJECT_SIZE, OBJECT_SIZE);
+    al_set_target_bitmap(bmp_path);
+    al_clear_to_color(al_map_rgb(255, 255, 255));
+
+    /* Food: white background + red circle */
+    ALLEGRO_BITMAP *bmp_eat = al_create_bitmap(OBJECT_SIZE, OBJECT_SIZE);
+    al_set_target_bitmap(bmp_eat);
+    al_clear_to_color(al_map_rgb(255, 255, 255));
+    al_draw_filled_circle(OBJECT_SIZE / 2.0f, OBJECT_SIZE / 2.0f,
+                          OBJECT_SIZE / 2.0f - 4, al_map_rgb(255, 0, 0));
+
+    /* Pre-render the static map into a single bitmap */
+    ALLEGRO_BITMAP *bmp_bg = al_create_bitmap(SCREEN_W, SCREEN_H);
+
+    /* ------------------------------------------------------------------ */
+    /*  Map definition                                                      */
+    /* ------------------------------------------------------------------ */
+    int map[SIZE_Y][SIZE_X] = {
+        {-1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1, 0, 0, 0, 0},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1},
+        {-1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1}
+    };
+
+    /* Pre-render static background */
+    al_set_target_bitmap(bmp_bg);
+    for (int i = 0; i < SIZE_Y; i++) {
+        for (int j = 0; j < SIZE_X; j++) {
+            switch (map[i][j]) {
+                case PATH: al_draw_bitmap(bmp_path, j * OBJECT_SIZE, i * OBJECT_SIZE, 0); break;
+                case WALL: al_draw_bitmap(bmp_wall, j * OBJECT_SIZE, i * OBJECT_SIZE, 0); break;
             }
         }
     }
-    
-    //inisialisasi awal posisi snake    
+
+    /* ------------------------------------------------------------------ */
+    /*  Snake init                                                          */
+    /* ------------------------------------------------------------------ */
+    srand((unsigned) time(NULL));
+
+    SNAKE *snake   = NULL;
+    SNAKE *pointer = NULL;
+
     add_body(&snake, 3, 1, map);
     map[snake->y][snake->x] = HEAD;
     add_body(&snake, 2, 1, map);
     add_body(&snake, 1, 1, map);
 
-    set_keyboard_rate(10, 10);
-	
-    while (!key[KEY_ESC])
-    {
-        //deteksi apakah sudah ada makanan di map
-        if(loaded==0){
-            do{
-                posX = rand()%(SIZE_X-1) + 1;
-                posY = rand()%(SIZE_Y-1) + 1;
-            }while(map[posY][posX] != PATH);
-            map[posY][posX] = EAT;
-            loaded = 1;
+    int moveX = 1, moveY = 0;
+    int posX = 0, posY = 0;
+    int loaded = 0;
+    int counter = 0;
+
+    /* ------------------------------------------------------------------ */
+    /*  Game loop                                                           */
+    /* ------------------------------------------------------------------ */
+    al_start_timer(timer);
+    bool running = true;
+
+    while (running) {
+        ALLEGRO_EVENT ev;
+        al_wait_for_event(queue, &ev);
+
+        if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+            running = false;
+            break;
         }
-        
-        //deteksi keyboard yang ditekan dan mengubah arah gerak snake
-        if(counter==5){  
-            if(key[KEY_UP] && moveY==0)
-            {
-                moveX=0;
-                moveY=-1;
-                clear_keybuf();
-            }
-            else if(key[KEY_DOWN] && moveY==0)
-            {
-                moveX=0;
-                moveY=1;
-                clear_keybuf();
-            }
-            else if(key[KEY_LEFT] && moveX==0)
-            {
-                moveX=-1;
-                moveY=0;
-                clear_keybuf();
-            }
-            else if(key[KEY_RIGHT] && moveX==0)
-            {
-                moveX=1;
-                moveY=0;
-                clear_keybuf();
-            }
-            x_his = snake->x;
-            y_his = snake->y;
-		  
-		  //kalau menabrak sesuatu maka keluar
-          if(!move_snake(snake, moveX, moveY, map)) break;
-		  
-		  //jika bertemu makanan maka tambah badan
-          if(map[posY][posX] != EAT)
-          {
-                add_body(&snake, x_his, y_his, map);
-                loaded = 0;
-          }
-		  counter=0;
-        }
-        counter++;
-		
-		//tempelkan semua obyek ke buffer
-		draw_sprite(buffer, bg_map, 0, 0);
-		draw_sprite(buffer, eat, posX*OBJECT_SIZE, posY*OBJECT_SIZE);
-		for(pointer = snake; pointer != NULL; pointer = pointer->next)
-        { 
-            switch(map[pointer->y][pointer->x])
-            {
-                case BODY : draw_sprite(buffer, snake_body, pointer->x*OBJECT_SIZE, pointer->y*OBJECT_SIZE);
-                            break;
-                case HEAD : draw_sprite(buffer, head, pointer->x*OBJECT_SIZE, pointer->y*OBJECT_SIZE);
-                            break; 
+
+        if (ev.type == ALLEGRO_EVENT_KEY_DOWN) {
+            switch (ev.keyboard.keycode) {
+                case ALLEGRO_KEY_ESCAPE: running = false; break;
+                case ALLEGRO_KEY_UP:    if (moveY == 0) { moveX =  0; moveY = -1; } break;
+                case ALLEGRO_KEY_DOWN:  if (moveY == 0) { moveX =  0; moveY =  1; } break;
+                case ALLEGRO_KEY_LEFT:  if (moveX == 0) { moveX = -1; moveY =  0; } break;
+                case ALLEGRO_KEY_RIGHT: if (moveX == 0) { moveX =  1; moveY =  0; } break;
             }
         }
-        
-        //tampilkan buffer ke screen
-        draw_sprite(screen, buffer, 0, 0);
-		clear_bitmap(buffer);
-		rest(10);
-	}
-    
-    //destroy semua bitmap
-    destroy_bitmap(head);
-    destroy_bitmap(buffer);
-    destroy_bitmap(path);
-    destroy_bitmap(wall);
-    destroy_bitmap(snake_body);
-    destroy_bitmap(eat);
-    
-	deinit();
-	return 0;
+
+        if (ev.type == ALLEGRO_EVENT_TIMER) {
+            /* Spawn food if none on map */
+            if (loaded == 0) {
+                do {
+                    posX = rand() % (SIZE_X - 1) + 1;
+                    posY = rand() % (SIZE_Y - 1) + 1;
+                } while (map[posY][posX] != PATH);
+                map[posY][posX] = EAT;
+                loaded = 1;
+            }
+
+            counter++;
+            if (counter >= MOVE_TICKS) {
+                counter = 0;
+                int x_his = snake->x;
+                int y_his = snake->y;
+
+                if (!move_snake(snake, moveX, moveY, map)) {
+                    running = false;
+                    break;
+                }
+
+                /* Grew: food was eaten */
+                if (map[posY][posX] != EAT) {
+                    add_body(&snake, x_his, y_his, map);
+                    loaded = 0;
+                }
+            }
+
+            /* Render */
+            al_set_target_backbuffer(display);
+            al_draw_bitmap(bmp_bg, 0, 0, 0);
+            al_draw_bitmap(bmp_eat, posX * OBJECT_SIZE, posY * OBJECT_SIZE, 0);
+
+            for (pointer = snake; pointer != NULL; pointer = pointer->next) {
+                switch (map[pointer->y][pointer->x]) {
+                    case BODY: al_draw_bitmap(bmp_body, pointer->x * OBJECT_SIZE, pointer->y * OBJECT_SIZE, 0); break;
+                    case HEAD: al_draw_bitmap(bmp_head, pointer->x * OBJECT_SIZE, pointer->y * OBJECT_SIZE, 0); break;
+                }
+            }
+
+            al_flip_display();
+        }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Cleanup                                                             */
+    /* ------------------------------------------------------------------ */
+    /* Free snake linked list */
+    while (snake) {
+        SNAKE *tmp = snake;
+        snake = snake->next;
+        free(tmp);
+    }
+
+    al_destroy_bitmap(bmp_head);
+    al_destroy_bitmap(bmp_body);
+    al_destroy_bitmap(bmp_wall);
+    al_destroy_bitmap(bmp_path);
+    al_destroy_bitmap(bmp_eat);
+    al_destroy_bitmap(bmp_bg);
+    al_destroy_timer(timer);
+    al_destroy_event_queue(queue);
+    al_destroy_display(display);
+
+    return 0;
 }
-END_OF_MAIN();
 
-void init() {
-	int depth, res;
-	allegro_init();
-	depth = desktop_color_depth();
-	if (depth == 0) depth = 32;
-	set_color_depth(depth);
-	res = set_gfx_mode(GFX_AUTODETECT_WINDOWED, 800, 600, 0, 0);
-	if (res != 0) {
-		allegro_message(allegro_error);
-		exit(-1);
-	}
+/* ------------------------------------------------------------------ */
+/*  Snake helpers                                                       */
+/* ------------------------------------------------------------------ */
 
-	install_timer();
-	install_keyboard();
-	/* add other initializations here */
-}
-
-void deinit() {
-	clear_keybuf();
-	/* add other deinitializations here */
-}
-
-//fungsi untuk menambah badan
 void add_body(SNAKE **snake, int x, int y, int map[SIZE_Y][SIZE_X])
 {
-    SNAKE *new_body = (SNAKE*) malloc(sizeof(SNAKE));
-    if(new_body == NULL) return;
+    SNAKE *new_body = (SNAKE *) malloc(sizeof(SNAKE));
+    if (new_body == NULL) return;
     new_body->next = *snake;
     *snake = new_body;
     new_body->x = x;
@@ -227,24 +273,21 @@ void add_body(SNAKE **snake, int x, int y, int map[SIZE_Y][SIZE_X])
     map[y][x] = BODY;
 }
 
-//fungsi untuk menggerakkan snake
 int move_snake(SNAKE *snake, int moveX, int moveY, int map[SIZE_Y][SIZE_X])
 {
     map[snake->y][snake->x] = PATH;
-    while(true)
-    {
-        if(snake->next == NULL)
-        {
+    while (true) {
+        if (snake->next == NULL) {
             snake->x += moveX;
-            if(snake->x >= SIZE_X) snake->x = 0;
-            else if(snake->x < 0) snake->x = SIZE_X - 1;
-            
+            if (snake->x >= SIZE_X) snake->x = 0;
+            else if (snake->x < 0)  snake->x = SIZE_X - 1;
+
             snake->y += moveY;
-            if(snake->y >= SIZE_Y) snake->y = 0;
-            else if(snake->y < 0) snake->y = SIZE_Y - 1;
-            
-            if(map[snake->y][snake->x] < 0){
-                allegro_message("nabrak...");
+            if (snake->y >= SIZE_Y) snake->y = 0;
+            else if (snake->y < 0)  snake->y = SIZE_Y - 1;
+
+            if (map[snake->y][snake->x] < 0) {
+                fprintf(stderr, "Snake hit a wall!\n");
                 return 0;
             }
             map[snake->y][snake->x] = HEAD;
